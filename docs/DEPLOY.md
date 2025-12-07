@@ -76,9 +76,24 @@ npm run build && npx drizzle-kit push
 
 ---
 
+## Node.js Version
+
+This project requires **Node.js 20.9.0 or higher** (Next.js 16 requirement).
+
+The following files ensure Railway uses the correct version:
+- `nixpacks.toml` - Configures Nixpacks to use Node.js 20
+- `.node-version` - Specifies Node 20
+- `package.json` engines field
+
+---
+
 ## Troubleshooting
 
-### Build fails
+### Build fails with Node.js version error
+- The project includes `nixpacks.toml` which should automatically use Node.js 20
+- If still failing, add this variable in Railway: `NIXPACKS_NODE_VERSION=20`
+
+### Build fails (other)
 - Check **"Deployments"** → click on failed deploy → view logs
 - Ensure all required env variables are set
 
