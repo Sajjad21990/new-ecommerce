@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: cms-ecommerce-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cms_ecommerce
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin - Database GUI (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: cms-ecommerce-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+
+# Usage:
+# -----------------------------------------
+# Start services:     docker-compose up -d
+# Stop services:      docker-compose down
+# View logs:          docker-compose logs -f
+# Reset database:     docker-compose down -v
+#
+# PostgreSQL:
+#   Host: localhost
+#   Port: 5432
+#   User: postgres
+#   Password: postgres
+#   Database: cms_ecommerce
+#
+# pgAdmin:
+#   URL: http://localhost:5050
+#   Email: admin@admin.com
+#   Password: admin
+#
+# Connection string for .env.local:
+#   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/cms_ecommerce"
