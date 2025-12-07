@@ -681,15 +681,15 @@ export default function MediaLibraryPage() {
 
       {/* Create Folder Dialog */}
       <Dialog open={createFolderOpen} onOpenChange={setCreateFolderOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Create New Folder</DialogTitle>
             <DialogDescription>
               Create a new folder to organize your media files.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
               <Label htmlFor="folder-name">Folder Name</Label>
               <Input
                 id="folder-name"
@@ -861,15 +861,15 @@ export default function MediaLibraryPage() {
 
       {/* Asset Detail Dialog */}
       <Dialog open={editAssetOpen} onOpenChange={setEditAssetOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Asset Details</DialogTitle>
           </DialogHeader>
           {selectedAsset && (
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-8">
-              {/* Preview & Metadata */}
-              <div className="space-y-6">
-                <div className="aspect-video relative rounded-lg overflow-hidden bg-muted border border-border/50 flex items-center justify-center">
+            <div className="flex flex-col sm:flex-row gap-6">
+              {/* Preview */}
+              <div className="sm:w-48 shrink-0">
+                <div className="aspect-square relative rounded-lg overflow-hidden bg-muted border border-border/50 flex items-center justify-center">
                   {selectedAsset.mimeType.startsWith("image/") ? (
                     <Image
                       src={selectedAsset.url}
@@ -883,34 +883,35 @@ export default function MediaLibraryPage() {
                     </div>
                   )}
                 </div>
-                <div className="grid grid-cols-4 gap-6 text-sm bg-muted/50 rounded-lg p-4">
-                  <div>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Size</span>
-                    <p className="font-medium mt-1">{formatFileSize(selectedAsset.size)}</p>
+                {/* Metadata */}
+                <div className="mt-4 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Size</span>
+                    <span className="font-medium">{formatFileSize(selectedAsset.size)}</span>
                   </div>
-                  <div>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Dimensions</span>
-                    <p className="font-medium mt-1">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Dimensions</span>
+                    <span className="font-medium">
                       {selectedAsset.width && selectedAsset.height
                         ? `${selectedAsset.width}×${selectedAsset.height}`
                         : "N/A"}
-                    </p>
+                    </span>
                   </div>
-                  <div>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Format</span>
-                    <p className="font-medium mt-1">{selectedAsset.format.toUpperCase()}</p>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Format</span>
+                    <span className="font-medium">{selectedAsset.format.toUpperCase()}</span>
                   </div>
-                  <div>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Date</span>
-                    <p className="font-medium mt-1">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Date</span>
+                    <span className="font-medium">
                       {new Date(selectedAsset.createdAt).toLocaleDateString()}
-                    </p>
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Edit Form */}
-              <div className="space-y-4">
+              <div className="flex-1 space-y-4">
                 <div>
                   <Label htmlFor="asset-name">File Name</Label>
                   <Input

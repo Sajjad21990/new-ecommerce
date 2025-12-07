@@ -49,7 +49,14 @@ function LoginPageContent() {
         toast.error("Invalid email or password");
       } else {
         toast.success("Logged in successfully");
-        router.push(callbackUrl);
+        // Fetch session to check role and redirect appropriately
+        const sessionRes = await fetch("/api/auth/session");
+        const session = await sessionRes.json();
+        if (session?.user?.role === "admin") {
+          router.push("/admin");
+        } else {
+          router.push(callbackUrl);
+        }
         router.refresh();
       }
     } catch {
@@ -80,7 +87,7 @@ function LoginPageContent() {
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="admin@store.com"
                 {...register("email")}
               />
               {errors.email && (
@@ -100,7 +107,7 @@ function LoginPageContent() {
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="admin123"
                 {...register("password")}
               />
               {errors.password && (

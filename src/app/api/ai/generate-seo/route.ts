@@ -1,7 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 
-const anthropic = new Anthropic();
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries = 3
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const response = await fetch(url, options);
+
+    if (response.ok) {
+      return response;
+    }
+
+    // If rate limited (429), wait and retry
+    if (response.status === 429) {
+      const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff: 1s, 2s, 4s
+      console.log(`Rate limited. Waiting ${waitTime}ms before retry ${attempt + 1}/${maxRetries}`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      lastError = new Error(`Rate limit exceeded`);
+      continue;
+    }
+
+    // For other errors, don't retry
+    throw new Error(`Gemini API error: ${response.status}`);
+  }
+
+  throw lastError || new Error("Max retries exceeded");
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,6 +38,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Product name is required" },
         { status: 400 }
+      );
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "Gemini API key not configured" },
+        { status: 500 }
       );
     }
 
@@ -37,28 +72,52 @@ Important:
 
 Return ONLY valid JSON, no markdown or explanation.`;
 
-    const message = await anthropic.messages.create({
-      model: "claude-3-5-haiku-20241022",
-      max_tokens: 500,
-      messages: [
-        {
-          role: "user",
-          content: prompt,
+    const response = await fetchWithRetry(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      ],
-    });
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 500,
+          },
+        }),
+      }
+    );
 
-    const content = message.content[0];
-    if (content.type !== "text") {
-      throw new Error("Unexpected response type");
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!text) {
+      throw new Error("No response from Gemini");
     }
 
-    // Parse the JSON response
-    const seoData = JSON.parse(content.text);
+    // Clean up the response (remove markdown code blocks if present)
+    const cleanedText = text.replace(/```json\n?|\n?```/g, "").trim();
+    const seoData = JSON.parse(cleanedText);
 
     return NextResponse.json(seoData);
   } catch (error) {
     console.error("AI SEO generation error:", error);
+
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+    // Provide specific error messages for common issues
+    if (errorMessage.includes("Rate limit")) {
+      return NextResponse.json(
+        { error: "AI service is busy. Please wait a moment and try again." },
+        { status: 429 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to generate SEO content" },
       { status: 500 }

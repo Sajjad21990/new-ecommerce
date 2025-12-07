@@ -17,7 +17,6 @@
     "db:seed": "dotenv -e .env.local -- npx tsx src/server/db/seed.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.71.2",
     "@auth/drizzle-adapter": "^1.11.1",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
