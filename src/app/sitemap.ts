@@ -3,6 +3,9 @@ import { db } from "@/server/db";
 import { products, categories, brands } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 
+// Generate sitemap at runtime, not build time
+export const dynamic = "force-dynamic";
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://store.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
