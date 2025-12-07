@@ -1,10 +1,17 @@
 import { Resend } from "resend";
 
-if (!process.env.RESEND_API_KEY) {
-  console.warn("RESEND_API_KEY not configured. Email features will not work.");
-}
+// Lazy initialization to avoid build-time errors
+let resendInstance: Resend | null = null;
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend(): Resend {
+  if (!resendInstance) {
+    if (!process.env.RESEND_API_KEY) {
+      console.warn("RESEND_API_KEY not configured. Email features will not work.");
+    }
+    resendInstance = new Resend(process.env.RESEND_API_KEY || "");
+  }
+  return resendInstance;
+}
 
 export const FROM_EMAIL = process.env.FROM_EMAIL || "onboarding@resend.dev";
 export const STORE_NAME = "STORE";
@@ -158,7 +165,7 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
   `;
 
   try {
-    const result = await resend.emails.send({
+    const result = await getResend().emails.send({
       from: FROM_EMAIL,
       to: data.customerEmail,
       subject: `Order Confirmed - #${data.orderNumber}`,
@@ -229,7 +236,7 @@ export async function sendShippingUpdateEmail({
   `;
 
   try {
-    const result = await resend.emails.send({
+    const result = await getResend().emails.send({
       from: FROM_EMAIL,
       to: customerEmail,
       subject: `Your Order #${orderNumber} Has Shipped!`,
