@@ -5,7 +5,7 @@
     "buildCommand": "npm run build"
   },
   "deploy": {
-    "startCommand": "npx drizzle-kit push --force && npm run start",
+    "startCommand": "npx drizzle-kit push --force && npm run db:import && npm run start",
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",

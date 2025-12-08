@@ -26,6 +26,7 @@ import { SizeGuide } from "@/components/store/size-guide";
 import { ProductQuestions } from "@/components/store/product-questions";
 import { PincodeChecker } from "@/components/store/pincode-checker";
 import { cn } from "@/lib/utils";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 import { useCartStore } from "@/stores/cart";
 import { useWishlistStore } from "@/stores/wishlist";
 import { useRecentlyViewedStore } from "@/stores/recently-viewed";
@@ -514,22 +515,49 @@ export default function ProductDetailPage({
             <AccordionItem value="description">
               <AccordionTrigger>Description</AccordionTrigger>
               <AccordionContent>
-                <div className="prose prose-sm max-w-none">
-                  {product.description || "No description available."}
-                </div>
+                <MarkdownRenderer content={product.description} />
+                {!product.description && (
+                  <p className="text-sm text-muted-foreground">No description available.</p>
+                )}
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="shipping">
-              <AccordionTrigger>Shipping & Returns</AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-2 text-sm">
-                  <p>Free shipping on orders over Rs.999</p>
-                  <p>Standard delivery: 3-5 business days</p>
-                  <p>Express delivery: 1-2 business days</p>
-                  <p>30-day return policy for unused items</p>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+            {product.care && (
+              <AccordionItem value="care">
+                <AccordionTrigger>Care Instructions</AccordionTrigger>
+                <AccordionContent>
+                  <MarkdownRenderer content={product.care} />
+                </AccordionContent>
+              </AccordionItem>
+            )}
+            {product.deliveryAndReturns && (
+              <AccordionItem value="delivery">
+                <AccordionTrigger>Delivery & Returns</AccordionTrigger>
+                <AccordionContent>
+                  <MarkdownRenderer content={product.deliveryAndReturns} />
+                </AccordionContent>
+              </AccordionItem>
+            )}
+            {product.gifting && (
+              <AccordionItem value="gifting">
+                <AccordionTrigger>Gifting</AccordionTrigger>
+                <AccordionContent>
+                  <MarkdownRenderer content={product.gifting} />
+                </AccordionContent>
+              </AccordionItem>
+            )}
+            {!product.deliveryAndReturns && (
+              <AccordionItem value="shipping">
+                <AccordionTrigger>Shipping & Returns</AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-2 text-sm">
+                    <p>Free shipping on orders over Rs.999</p>
+                    <p>Standard delivery: 3-5 business days</p>
+                    <p>Express delivery: 1-2 business days</p>
+                    <p>30-day return policy for unused items</p>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            )}
           </Accordion>
         </div>
       </div>

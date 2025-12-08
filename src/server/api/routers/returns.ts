@@ -5,8 +5,9 @@ import {
   protectedProcedure,
   adminProcedure,
 } from "@/server/api/trpc";
-import { orderReturns, orders, orderTimeline } from "@/server/db/schema";
+import { orderReturns, orders, orderTimeline, orderItems, users } from "@/server/db/schema";
 import { TRPCError } from "@trpc/server";
+import { sendReturnRequestedEmail, sendReturnStatusUpdateEmail } from "@/lib/email";
 
 const returnReasonEnum = z.enum([
   "defective",
@@ -115,6 +116,45 @@ export const returnsRouter = createTRPCRouter({
         isPublic: true,
         createdBy: userId,
       });
+
+      // Get user and order items for email
+      const user = await ctx.db.query.users.findFirst({
+        where: eq(users.id, userId),
+      });
+      const orderItemsList = await ctx.db.query.orderItems.findMany({
+        where: eq(orderItems.orderId, input.orderId),
+      });
+
+      // Map return item IDs to actual item names
+      const returnItemDetails = input.items.map((item) => {
+        const orderItem = orderItemsList.find((oi) => oi.id === item.orderItemId);
+        return {
+          name: orderItem?.name || "Unknown Product",
+          quantity: item.quantity,
+        };
+      });
+
+      // Format reason for display
+      const reasonLabels: Record<string, string> = {
+        defective: "Product is defective",
+        wrong_item: "Wrong item received",
+        not_as_described: "Item not as described",
+        changed_mind: "Changed my mind",
+        size_issue: "Size doesn't fit",
+        other: "Other reason",
+      };
+
+      // Send return requested email
+      if (user?.email) {
+        sendReturnRequestedEmail({
+          customerEmail: user.email,
+          customerName: user.name || "Customer",
+          returnNumber: returnRequest.returnNumber,
+          orderNumber: order.orderNumber,
+          reason: reasonLabels[input.reason] || input.reason,
+          items: returnItemDetails,
+        }).catch((err) => console.error("Failed to send return requested email:", err));
+      }
 
       return returnRequest;
     }),
@@ -319,7 +359,30 @@ export const returnsRouter = createTRPCRouter({
         createdBy: ctx.session.user.id,
       });
 
-      // TODO: Send email notification to customer
+      // Send email notification to customer for key status changes
+      if (["approved", "rejected", "refunded"].includes(input.status)) {
+        const user = await ctx.db.query.users.findFirst({
+          where: eq(users.id, currentReturn.userId),
+        });
+        const order = await ctx.db.query.orders.findFirst({
+          where: eq(orders.id, currentReturn.orderId),
+        });
+
+        if (user?.email && order) {
+          sendReturnStatusUpdateEmail({
+            customerEmail: user.email,
+            customerName: user.name || "Customer",
+            returnNumber: currentReturn.returnNumber,
+            orderNumber: order.orderNumber,
+            status: input.status as "approved" | "rejected" | "refunded",
+            refundAmount: input.refundAmount,
+            rejectionReason: input.status === "rejected" ? input.adminNotes : undefined,
+            instructions: input.status === "approved"
+              ? "Please ship your return items to our warehouse. You will receive a refund once we receive and inspect the items."
+              : undefined,
+          }).catch((err) => console.error("Failed to send return status email:", err));
+        }
+      }
 
       return updatedReturn;
     }),

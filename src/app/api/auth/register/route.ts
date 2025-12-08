@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/server/db";
 import { users } from "@/server/db/schema";
 import { hashPassword } from "@/lib/auth";
+import { sendWelcomeEmail } from "@/lib/email";
 
 const registerSchema = z.object({
   name: z.string().min(2),
@@ -49,6 +50,12 @@ export async function POST(request: NextRequest) {
         role: "customer",
       })
       .returning({ id: users.id, email: users.email });
+
+    // Send welcome email (async, don't block response)
+    sendWelcomeEmail({
+      customerEmail: email,
+      customerName: name,
+    }).catch((err) => console.error("Failed to send welcome email:", err));
 
     return NextResponse.json(
       { message: "User created successfully", user: newUser },

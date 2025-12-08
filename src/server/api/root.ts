@@ -23,6 +23,7 @@ import { inventoryAlertRouter } from "./routers/inventoryAlert";
 import { inventoryRouter } from "./routers/inventory";
 import { notificationsRouter } from "./routers/notifications";
 import { dashboardRouter } from "./routers/dashboard";
+import { abandonedCartRouter } from "./routers/abandonedCart";
 
 /**
  * Root router for the tRPC API
@@ -53,6 +54,7 @@ export const appRouter = createTRPCRouter({
   inventoryAlert: inventoryAlertRouter,
   inventory: inventoryRouter,
   notifications: notificationsRouter,
+  abandonedCart: abandonedCartRouter,
 });
 
 // Export type definition of API

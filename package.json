@@ -14,7 +14,8 @@
     "db:migrate": "dotenv -e .env.local -- drizzle-kit migrate",
     "db:push": "dotenv -e .env.local -- drizzle-kit push",
     "db:studio": "dotenv -e .env.local -- drizzle-kit studio",
-    "db:seed": "dotenv -e .env.local -- npx tsx src/server/db/seed.ts"
+    "db:seed": "dotenv -e .env.local -- npx tsx src/server/db/seed.ts",
+    "db:import": "dotenv -e .env.local -- npx tsx src/server/db/import-products.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
@@ -44,6 +45,8 @@
     "@trpc/client": "^11.0.0",
     "@trpc/react-query": "^11.0.0",
     "@trpc/server": "^11.0.0",
+    "@types/turndown": "^5.0.6",
+    "@uiw/react-md-editor": "^4.0.11",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.8.0",
@@ -63,12 +66,14 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-hook-form": "^7.68.0",
+    "react-markdown": "^10.1.0",
     "react-pdf": "^10.2.0",
     "recharts": "^3.5.1",
     "resend": "^6.5.2",
     "sonner": "^2.0.7",
     "superjson": "^2.2.6",
     "tailwind-merge": "^3.4.0",
+    "turndown": "^7.2.2",
     "zod": "^4.1.13",
     "zustand": "^5.0.9"
   },

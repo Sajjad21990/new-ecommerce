@@ -162,6 +162,13 @@ export const products = pgTable("products", {
   minOrderQuantity: integer("min_order_quantity").default(1),
   maxOrderQuantity: integer("max_order_quantity"),
   publishedAt: timestamp("published_at"),
+  // New fields for imported data
+  care: text("care"),
+  deliveryAndReturns: text("delivery_and_returns"),
+  gifting: text("gifting"),
+  youtubeLink: jsonb("youtube_link"),
+  stockQuantity: integer("stock_quantity").default(0),
+  searchText: text("search_text"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

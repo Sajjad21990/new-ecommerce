@@ -11,9 +11,16 @@ import {
   orderItems,
   orderTimeline,
   users,
+  settings,
 } from "@/server/db/schema";
 import { createRazorpayOrder, verifyPaymentSignature } from "@/lib/razorpay";
-import { sendOrderConfirmationEmail } from "@/lib/email";
+import {
+  sendOrderConfirmationEmail,
+  sendShippingUpdateEmail,
+  sendOrderDeliveredEmail,
+  sendOrderCancelledEmail,
+  sendNewOrderAdminEmail,
+} from "@/lib/email";
 import { TRPCError } from "@trpc/server";
 
 const addressSchema = z.object({
@@ -315,6 +322,22 @@ export const orderRouter = createTRPCRouter({
         paymentMethod: "Razorpay",
       }).catch((err) => console.error("Failed to send order email:", err));
 
+      // Send admin notification email
+      const storeSettings = await ctx.db.query.settings.findFirst({
+        where: eq(settings.key, "store"),
+      });
+      const adminEmail = (storeSettings?.value as { email?: string })?.email;
+      if (adminEmail) {
+        sendNewOrderAdminEmail({
+          adminEmail,
+          orderNumber: updatedOrder.orderNumber,
+          customerName: shippingAddress.fullName,
+          customerEmail: shippingAddress.email,
+          total: updatedOrder.total,
+          itemsCount: items.length,
+        }).catch((err) => console.error("Failed to send admin notification:", err));
+      }
+
       // TODO: Update product stock
 
       return {
@@ -559,7 +582,41 @@ export const orderRouter = createTRPCRouter({
         createdBy: ctx.session.user.id,
       });
 
-      // TODO: Send email notification if notifyCustomer is true
+      // Send email notification if notifyCustomer is true
+      if (input.notifyCustomer) {
+        const shippingAddress = updatedOrder.shippingAddress as {
+          fullName: string;
+          email: string;
+        };
+        const customerEmail = updatedOrder.guestEmail || shippingAddress?.email;
+        const customerName = shippingAddress?.fullName || "Customer";
+
+        if (customerEmail) {
+          if (input.status === "shipped") {
+            sendShippingUpdateEmail({
+              customerEmail,
+              customerName,
+              orderNumber: updatedOrder.orderNumber,
+              trackingNumber: input.trackingNumber,
+              trackingUrl: input.trackingUrl,
+            }).catch((err) => console.error("Failed to send shipping email:", err));
+          } else if (input.status === "delivered") {
+            sendOrderDeliveredEmail({
+              customerEmail,
+              customerName,
+              orderNumber: updatedOrder.orderNumber,
+              orderId: updatedOrder.id,
+            }).catch((err) => console.error("Failed to send delivered email:", err));
+          } else if (input.status === "cancelled") {
+            sendOrderCancelledEmail({
+              customerEmail,
+              customerName,
+              orderNumber: updatedOrder.orderNumber,
+              refundAmount: updatedOrder.paymentStatus === "paid" ? updatedOrder.total : undefined,
+            }).catch((err) => console.error("Failed to send cancelled email:", err));
+          }
+        }
+      }
 
       return updatedOrder;
     }),
@@ -677,7 +734,26 @@ export const orderRouter = createTRPCRouter({
         createdBy: ctx.session.user.id,
       });
 
-      // TODO: Send tracking email if notifyCustomer is true
+      // Send tracking email if notifyCustomer is true
+      if (input.notifyCustomer) {
+        const shippingAddress = updatedOrder.shippingAddress as {
+          fullName: string;
+          email: string;
+        };
+        const customerEmail = updatedOrder.guestEmail || shippingAddress?.email;
+        const customerName = shippingAddress?.fullName || "Customer";
+
+        if (customerEmail) {
+          sendShippingUpdateEmail({
+            customerEmail,
+            customerName,
+            orderNumber: updatedOrder.orderNumber,
+            trackingNumber: input.trackingNumber,
+            trackingUrl: input.trackingUrl,
+            carrier: input.carrier,
+          }).catch((err) => console.error("Failed to send tracking email:", err));
+        }
+      }
 
       return updatedOrder;
     }),

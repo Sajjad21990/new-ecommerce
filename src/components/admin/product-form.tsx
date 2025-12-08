@@ -29,6 +29,7 @@ import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { Switch } from "@/components/ui/switch";
 import {
   Form,
@@ -64,6 +65,9 @@ const productSchema = z.object({
   slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug must be lowercase with hyphens"),
   description: z.string().optional(),
   shortDescription: z.string().max(200).optional(),
+  care: z.string().optional(),
+  deliveryAndReturns: z.string().optional(),
+  gifting: z.string().optional(),
   sku: z.string().optional(),
   basePrice: z.coerce.number().positive("Price must be positive"),
   salePrice: z.union([z.coerce.number().positive(), z.literal("")]).optional(),
@@ -133,6 +137,9 @@ type Product = {
   slug: string;
   description: string | null;
   shortDescription: string | null;
+  care: string | null;
+  deliveryAndReturns: string | null;
+  gifting: string | null;
   sku: string | null;
   basePrice: string;
   salePrice: string | null;
@@ -169,6 +176,9 @@ export function ProductForm({ product }: ProductFormProps) {
       slug: product?.slug || "",
       description: product?.description || "",
       shortDescription: product?.shortDescription || "",
+      care: product?.care || "",
+      deliveryAndReturns: product?.deliveryAndReturns || "",
+      gifting: product?.gifting || "",
       sku: product?.sku || "",
       basePrice: product ? parseFloat(product.basePrice) : 0,
       salePrice: product?.salePrice ? parseFloat(product.salePrice) : "",
@@ -270,6 +280,9 @@ export function ProductForm({ product }: ProductFormProps) {
       slug: data.slug,
       description: data.description || undefined,
       shortDescription: data.shortDescription || undefined,
+      care: data.care || undefined,
+      deliveryAndReturns: data.deliveryAndReturns || undefined,
+      gifting: data.gifting || undefined,
       sku: data.sku || undefined,
       basePrice: data.basePrice,
       salePrice: data.salePrice ? Number(data.salePrice) : undefined,
@@ -469,13 +482,70 @@ export function ProductForm({ product }: ProductFormProps) {
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Full Description</FormLabel>
+                          <FormLabel>Full Description (Markdown)</FormLabel>
                           <FormControl>
-                            <Textarea
-                              {...field}
+                            <MarkdownEditor
+                              value={field.value}
+                              onChange={field.onChange}
                               placeholder="Detailed product description..."
-                              rows={5}
-                              className="bg-background resize-none"
+                              height={200}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="care"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Care Instructions (Markdown)</FormLabel>
+                          <FormControl>
+                            <MarkdownEditor
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="Care instructions for the product..."
+                              height={150}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="deliveryAndReturns"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Delivery & Returns (Markdown)</FormLabel>
+                          <FormControl>
+                            <MarkdownEditor
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="Delivery and return policy..."
+                              height={150}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="gifting"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Gifting Information (Markdown)</FormLabel>
+                          <FormControl>
+                            <MarkdownEditor
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="Gift packaging and options..."
+                              height={150}
                             />
                           </FormControl>
                           <FormMessage />
@@ -1033,7 +1103,7 @@ export function ProductForm({ product }: ProductFormProps) {
           </div>
 
           {/* Right Column - Preview & Settings */}
-          <div className="space-y-6 lg:sticky lg:top-4 self-start max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-thin">
+          <div className="space-y-6 lg:sticky lg:top-4 self-start">
             {/* Preview Card */}
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
               <CardHeader className="pb-3">
