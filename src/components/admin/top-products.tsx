@@ -106,7 +106,7 @@ export function TopProducts() {
                 {/* Revenue */}
                 <div className="text-right shrink-0">
                   <p className="text-sm font-semibold">
-                    ${parseFloat(product.revenue).toLocaleString()}
+                    ₹{parseFloat(product.revenue).toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground">Revenue</p>
                 </div>

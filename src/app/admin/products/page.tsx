@@ -154,9 +154,9 @@ export default function ProductsPage() {
   const hasFilters = search || categoryFilter || statusFilter !== undefined;
 
   const formatPrice = (price: string) => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("en-IN", {
       style: "currency",
-      currency: "USD",
+      currency: "INR",
     }).format(parseFloat(price));
   };
 
@@ -453,7 +453,7 @@ export default function ProductsPage() {
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href={`/admin/products/${product.id}`}>
+                            <Link href={`/admin/products/${product.id}/edit`}>
                               <Pencil className="mr-2 h-4 w-4" />
                               Edit
                             </Link>
@@ -527,7 +527,7 @@ export default function ProductsPage() {
                   {/* Overlay Actions */}
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                     <Button size="sm" variant="secondary" asChild>
-                      <Link href={`/admin/products/${product.id}`}>
+                      <Link href={`/admin/products/${product.id}/edit`}>
                         <Pencil className="h-4 w-4" />
                       </Link>
                     </Button>

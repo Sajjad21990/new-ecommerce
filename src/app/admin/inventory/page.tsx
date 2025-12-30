@@ -42,6 +42,7 @@ import {
   Loader2,
   Edit,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 type StockFilter = "all" | "low_stock" | "out_of_stock" | "in_stock";
 
@@ -73,6 +74,16 @@ export default function InventoryPage() {
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update stock");
+    },
+  });
+
+  const updateInStockMutation = trpc.inventory.updateInStock.useMutation({
+    onSuccess: () => {
+      toast.success("Stock status updated");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update stock status");
     },
   });
 
@@ -279,7 +290,23 @@ export default function InventoryPage() {
                       <TableCell className="text-center font-semibold">
                         {item.totalStock}
                       </TableCell>
-                      <TableCell>{getStockBadge(item.stockStatus)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={item.inStock}
+                            onCheckedChange={(checked) => {
+                              updateInStockMutation.mutate({
+                                productId: item.id,
+                                inStock: checked,
+                              });
+                            }}
+                            disabled={updateInStockMutation.isPending}
+                          />
+                          <span className={`text-sm ${item.inStock ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                            {item.inStock ? "In Stock" : "Out of Stock"}
+                          </span>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right">
                         {!item.hasVariants && (
                           <span className="text-xs text-muted-foreground">No Variants</span>

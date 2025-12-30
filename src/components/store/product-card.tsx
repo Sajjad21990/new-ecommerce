@@ -16,6 +16,7 @@ interface ProductCardProps {
   imageAlt?: string;
   isNew?: boolean;
   isFeatured?: boolean;
+  inStock?: boolean;
   className?: string;
 }
 
@@ -27,6 +28,7 @@ export function ProductCard({
   imageUrl,
   imageAlt,
   isNew,
+  inStock = true,
   className,
 }: ProductCardProps) {
   const price = parseFloat(salePrice || basePrice);
@@ -63,12 +65,17 @@ export function ProductCard({
 
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {discount && discount > 0 && (
+            {!inStock && (
+              <span className="px-2 py-1 text-xs font-medium bg-gray-600 text-white rounded">
+                Out of Stock
+              </span>
+            )}
+            {discount && discount > 0 && inStock && (
               <span className="px-2 py-1 text-xs font-medium bg-red-500 text-white rounded">
                 -{discount}%
               </span>
             )}
-            {isNew && (
+            {isNew && inStock && (
               <span className="px-2 py-1 text-xs font-medium bg-black text-white rounded">
                 New
               </span>

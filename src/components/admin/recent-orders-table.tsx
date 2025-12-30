@@ -90,7 +90,7 @@ export function RecentOrdersTable() {
 
                 <div className="text-right shrink-0">
                   <p className="text-sm font-semibold">
-                    ${parseFloat(order.total).toLocaleString()}
+                    ₹{parseFloat(order.total).toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(order.createdAt), {

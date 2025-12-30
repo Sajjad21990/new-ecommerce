@@ -17,7 +17,7 @@ import {
   Package,
   ImageIcon,
   Tag,
-  DollarSign,
+  IndianRupee,
   Layers,
   BarChart3,
   Eye,
@@ -326,7 +326,7 @@ export default function ProductDetailPage({
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
+                <IndianRupee className="h-4 w-4" />
                 Pricing
               </CardTitle>
             </CardHeader>

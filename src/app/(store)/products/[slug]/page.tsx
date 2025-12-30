@@ -17,14 +17,12 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ProductCard } from "@/components/store/product-card";
-import { ProductReviews } from "@/components/store/product-reviews";
 import { RecentlyViewed } from "@/components/store/recently-viewed";
 import { SocialShare } from "@/components/store/social-share";
 import { CompareButton } from "@/components/store/comparison-bar";
 import { StockNotification } from "@/components/store/stock-notification";
 import { SizeGuide } from "@/components/store/size-guide";
 import { ProductQuestions } from "@/components/store/product-questions";
-import { PincodeChecker } from "@/components/store/pincode-checker";
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 import { useCartStore } from "@/stores/cart";
@@ -507,9 +505,6 @@ export default function ProductDetailPage({
             />
           </div>
 
-          {/* Pincode Checker */}
-          <PincodeChecker />
-
           {/* Additional Info */}
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="description">
@@ -561,11 +556,6 @@ export default function ProductDetailPage({
           </Accordion>
         </div>
       </div>
-
-      {/* Reviews Section */}
-      <section className="mt-16">
-        <ProductReviews productId={product.id} />
-      </section>
 
       {/* Product Questions */}
       <section className="mt-16">

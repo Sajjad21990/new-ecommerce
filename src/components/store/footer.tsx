@@ -16,7 +16,6 @@ const footerLinks = {
     { name: "Terms & Conditions", href: "/terms" },
     { name: "FAQ", href: "/faq" },
     { name: "Privacy Policy", href: "/privacy" },
-    { name: "Delivery & Returns", href: "/shipping" },
   ],
   work: {
     hours: [

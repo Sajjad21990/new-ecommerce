@@ -4,6 +4,7 @@ import "./globals.css";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PostHogProvider } from "@/components/providers/posthog-provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -104,10 +105,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TRPCProvider>
-            {children}
-            <Toaster position="top-right" richColors />
-          </TRPCProvider>
+          <PostHogProvider>
+            <TRPCProvider>
+              {children}
+              <Toaster position="top-right" richColors />
+            </TRPCProvider>
+          </PostHogProvider>
         </ThemeProvider>
       </body>
     </html>

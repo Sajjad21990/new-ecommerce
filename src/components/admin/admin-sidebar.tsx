@@ -10,8 +10,6 @@ import {
   Tag,
   ShoppingCart,
   Users,
-  Percent,
-  Star,
   FileText,
   Settings,
   Store,
@@ -22,7 +20,6 @@ import {
   ListOrdered,
   RotateCcw,
   CreditCard,
-  Truck,
   Cog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -60,6 +57,7 @@ const navigation: NavItem[] = [
     submenu: [
       { name: "All Products", href: "/admin/products", icon: ListOrdered },
       { name: "Add Product", href: "/admin/products/new", icon: Plus },
+      { name: "Inventory", href: "/admin/inventory", icon: Warehouse },
       { name: "Categories", href: "/admin/categories", icon: FolderTree },
       { name: "Brands", href: "/admin/brands", icon: Tag },
     ],
@@ -84,21 +82,6 @@ const navigation: NavItem[] = [
     icon: Users,
   },
   {
-    name: "Inventory",
-    href: "/admin/inventory",
-    icon: Warehouse,
-  },
-  {
-    name: "Coupons",
-    href: "/admin/coupons",
-    icon: Percent,
-  },
-  {
-    name: "Reviews",
-    href: "/admin/reviews",
-    icon: Star,
-  },
-  {
     name: "Content",
     href: "/admin/content",
     icon: FileText,
@@ -110,7 +93,6 @@ const navigation: NavItem[] = [
     submenu: [
       { name: "General", href: "/admin/settings", icon: Cog },
       { name: "Payments", href: "/admin/settings/payments", icon: CreditCard },
-      { name: "Shipping", href: "/admin/settings/shipping", icon: Truck },
     ],
   },
 ];

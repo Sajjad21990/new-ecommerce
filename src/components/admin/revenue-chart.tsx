@@ -80,7 +80,7 @@ export function RevenueChart({ data, loading = false }: RevenueChartProps) {
             <p className="text-sm">
               <span className="text-muted-foreground">Revenue: </span>
               <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                ${payload[0]?.value?.toLocaleString()}
+                ₹{payload[0]?.value?.toLocaleString()}
               </span>
             </p>
             <p className="text-sm">
@@ -157,7 +157,7 @@ export function RevenueChart({ data, loading = false }: RevenueChartProps) {
                   tick={{ fontSize: 12 }}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => `$${value}`}
+                  tickFormatter={(value) => `₹${value}`}
                   className="text-muted-foreground"
                 />
                 <Tooltip content={<CustomTooltip />} />

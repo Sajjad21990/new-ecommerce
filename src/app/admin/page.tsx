@@ -7,7 +7,7 @@ import { RevenueChart } from "@/components/admin/revenue-chart";
 import { RecentOrdersTable } from "@/components/admin/recent-orders-table";
 import { TopProducts } from "@/components/admin/top-products";
 import {
-  DollarSign,
+  IndianRupee,
   ShoppingCart,
   Users,
   Package,
@@ -57,7 +57,7 @@ export default function AdminDashboard() {
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Total Revenue</p>
               <p className="text-3xl font-bold">
-                ${isLoading ? "..." : (stats?.totalRevenue || 0).toLocaleString()}
+                ₹{isLoading ? "..." : (stats?.totalRevenue || 0).toLocaleString()}
               </p>
               <div className="flex items-center gap-1 text-sm">
                 <span className={cn(
@@ -211,8 +211,8 @@ export default function AdminDashboard() {
         <QuickStat
           title="Avg Order Value"
           value={stats?.avgOrderValue || 0}
-          prefix="$"
-          icon={DollarSign}
+          prefix="₹"
+          icon={IndianRupee}
           loading={isLoading}
         />
         <QuickStat

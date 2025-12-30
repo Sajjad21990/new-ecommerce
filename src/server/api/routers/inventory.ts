@@ -26,6 +26,7 @@ export const inventoryRouter = createTRPCRouter({
           sku: products.sku,
           isActive: products.isActive,
           basePrice: products.basePrice,
+          inStock: products.inStock,
         })
         .from(products)
         .where(
@@ -62,7 +63,7 @@ export const inventoryRouter = createTRPCRouter({
         variantsByProduct.get(variant.productId)!.push(variant);
       }
 
-      // Build inventory items
+      // Build inventory items - use product-level inStock boolean
       const inventoryItems = productsList.map((product) => {
         const variants = variantsByProduct.get(product.id) || [];
         const totalStock = variants.reduce((sum, v) => sum + v.stock, 0);
@@ -73,12 +74,8 @@ export const inventoryRouter = createTRPCRouter({
           variants,
           totalStock,
           hasVariants,
-          stockStatus:
-            totalStock === 0
-              ? "out_of_stock"
-              : totalStock <= 5
-              ? "low_stock"
-              : "in_stock",
+          // Use the product-level inStock field for binary stock management
+          stockStatus: product.inStock ? "in_stock" : "out_of_stock",
         };
       });
 
@@ -108,6 +105,30 @@ export const inventoryRouter = createTRPCRouter({
         limit,
         totalPages: Math.ceil(filteredItems.length / limit),
       };
+    }),
+
+  // Update product inStock status
+  updateInStock: adminProcedure
+    .input(
+      z.object({
+        productId: z.string().uuid(),
+        inStock: z.boolean(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { productId, inStock } = input;
+
+      const [updated] = await ctx.db
+        .update(products)
+        .set({ inStock })
+        .where(eq(products.id, productId))
+        .returning();
+
+      if (!updated) {
+        throw new Error("Product not found");
+      }
+
+      return updated;
     }),
 
   // Update variant stock

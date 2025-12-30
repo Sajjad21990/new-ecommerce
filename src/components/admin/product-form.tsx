@@ -16,7 +16,7 @@ import {
   Eye,
   Package,
   Tag,
-  DollarSign,
+  IndianRupee,
   Layers,
   Settings,
   Search,
@@ -61,25 +61,29 @@ import {
 } from "@/components/ui/accordion";
 
 const productSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug must be lowercase with hyphens"),
+  name: z.string().min(1, "Please enter a product name"),
+  slug: z.string()
+    .min(1, "Please enter a URL slug")
+    .regex(/^[a-z0-9-]+$/, "URL slug can only contain lowercase letters, numbers, and hyphens"),
   description: z.string().optional(),
-  shortDescription: z.string().max(200).optional(),
+  shortDescription: z.string().max(200, "Short description must be 200 characters or less").optional(),
   care: z.string().optional(),
   deliveryAndReturns: z.string().optional(),
   gifting: z.string().optional(),
   sku: z.string().optional(),
-  basePrice: z.coerce.number().positive("Price must be positive"),
-  salePrice: z.union([z.coerce.number().positive(), z.literal("")]).optional(),
-  categoryId: z.string().uuid().optional().or(z.literal("")),
-  brandId: z.string().uuid().optional().or(z.literal("")),
+  basePrice: z.coerce.number().positive("Please enter a valid price greater than 0"),
+  salePrice: z.union([z.coerce.number().positive("Sale price must be greater than 0"), z.literal("")]).optional(),
+  categoryId: z.string().uuid("Please select a valid category").optional().or(z.literal("")),
+  brandId: z.string().uuid("Please select a valid brand").optional().or(z.literal("")),
   isActive: z.boolean(),
   isFeatured: z.boolean(),
   isNew: z.boolean(),
+  inStock: z.boolean(),
   tags: z.string().optional(),
+  youtubeLink: z.string().url("Please enter a valid YouTube URL").optional().or(z.literal("")),
   images: z.array(
     z.object({
-      url: z.string().url("Must be a valid URL"),
+      url: z.string().url("Please enter a valid image URL"),
       altText: z.string().optional(),
       isPrimary: z.boolean(),
       sortOrder: z.number(),
@@ -92,16 +96,16 @@ const productSchema = z.object({
       color: z.string().optional(),
       colorHex: z.string().optional(),
       description: z.string().optional(),
-      price: z.union([z.coerce.number().positive(), z.literal("")]).optional(),
-      stock: z.number().min(0),
+      price: z.union([z.coerce.number().positive("Variant price must be greater than 0"), z.literal("")]).optional(),
+      stock: z.number().min(0, "Stock cannot be negative"),
     })
   ),
   seo: z.object({
-    metaTitle: z.string().max(70).optional(),
-    metaDescription: z.string().max(160).optional(),
+    metaTitle: z.string().max(70, "Meta title should be 70 characters or less for optimal SEO").optional(),
+    metaDescription: z.string().max(160, "Meta description should be 160 characters or less for optimal SEO").optional(),
     metaKeywords: z.string().optional(),
-    ogTitle: z.string().max(70).optional(),
-    ogDescription: z.string().max(200).optional(),
+    ogTitle: z.string().max(70, "OG title should be 70 characters or less").optional(),
+    ogDescription: z.string().max(200, "OG description should be 200 characters or less").optional(),
     ogImage: z.string().optional(),
     canonicalUrl: z.string().optional(),
     noIndex: z.boolean(),
@@ -148,9 +152,11 @@ type Product = {
   isActive: boolean;
   isFeatured: boolean;
   isNew: boolean;
+  inStock: boolean;
   tags: string[] | null;
   images: ProductImage[];
   variants: ProductVariant[];
+  youtubeLink?: unknown;
 };
 
 interface ProductFormProps {
@@ -187,7 +193,9 @@ export function ProductForm({ product }: ProductFormProps) {
       isActive: product?.isActive ?? true,
       isFeatured: product?.isFeatured ?? false,
       isNew: product?.isNew ?? true,
+      inStock: product?.inStock ?? true,
       tags: product?.tags?.join(", ") || "",
+      youtubeLink: (product?.youtubeLink as string) || "",
       images: product?.images?.map((img) => ({
         url: img.url,
         altText: img.altText || "",
@@ -291,7 +299,9 @@ export function ProductForm({ product }: ProductFormProps) {
       isActive: data.isActive,
       isFeatured: data.isFeatured,
       isNew: data.isNew,
+      inStock: data.inStock,
       tags,
+      youtubeLink: data.youtubeLink || undefined,
       images: data.images.length > 0 ? data.images : undefined,
       variants: data.variants.length > 0
         ? data.variants.map((v) => ({
@@ -482,13 +492,13 @@ export function ProductForm({ product }: ProductFormProps) {
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Full Description (Markdown)</FormLabel>
+                          <FormLabel>Full Description</FormLabel>
                           <FormControl>
-                            <MarkdownEditor
-                              value={field.value}
-                              onChange={field.onChange}
+                            <Textarea
+                              {...field}
                               placeholder="Detailed product description..."
-                              height={200}
+                              rows={6}
+                              className="bg-background resize-y"
                             />
                           </FormControl>
                           <FormMessage />
@@ -566,6 +576,27 @@ export function ProductForm({ product }: ProductFormProps) {
                         </FormItem>
                       )}
                     />
+
+                    <FormField
+                      control={form.control}
+                      name="youtubeLink"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>YouTube Video Link</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="https://www.youtube.com/watch?v=..."
+                              className="bg-background"
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs">
+                            Add a YouTube video URL to embed on the product page
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -575,7 +606,7 @@ export function ProductForm({ product }: ProductFormProps) {
                 <AccordionTrigger className="px-6 py-4 hover:no-underline">
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
-                      <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                      <IndianRupee className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div className="text-left">
                       <h3 className="font-semibold">Pricing</h3>
@@ -1231,6 +1262,22 @@ export function ProductForm({ product }: ProductFormProps) {
                       <div className="space-y-0.5">
                         <Label className="text-sm font-medium">New Arrival</Label>
                         <p className="text-xs text-muted-foreground">Display new badge</p>
+                      </div>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </div>
+                  )}
+                />
+
+                <Separator />
+
+                <FormField
+                  control={form.control}
+                  name="inStock"
+                  render={({ field }) => (
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">In Stock</Label>
+                        <p className="text-xs text-muted-foreground">Product availability</p>
                       </div>
                       <Switch checked={field.value} onCheckedChange={field.onChange} />
                     </div>

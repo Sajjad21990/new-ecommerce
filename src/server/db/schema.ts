@@ -168,6 +168,7 @@ export const products = pgTable("products", {
   gifting: text("gifting"),
   youtubeLink: jsonb("youtube_link"),
   stockQuantity: integer("stock_quantity").default(0),
+  inStock: boolean("in_stock").default(true).notNull(),
   searchText: text("search_text"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
