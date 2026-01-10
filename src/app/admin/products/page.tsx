@@ -95,7 +95,7 @@ export default function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState<string | undefined>();
   const [statusFilter, setStatusFilter] = useState<boolean | undefined>();
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(20);
+  const [limit, setLimit] = useState(50);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
