@@ -12,11 +12,13 @@ import {
   FileDown,
   LayoutGrid,
   List,
-  Filter,
   ImageIcon,
   Eye,
   Copy,
   X,
+  Package,
+  PackageCheck,
+  PackageX,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/client";
 import { Button } from "@/components/ui/button";
@@ -45,7 +47,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
@@ -57,6 +59,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +83,7 @@ type Product = {
   isActive: boolean;
   isFeatured: boolean;
   isNew: boolean;
+  inStock: boolean;
   createdAt: Date;
   images: { url: string }[];
   category: { id: string; name: string } | null;
@@ -86,6 +99,8 @@ export default function ProductsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [bulkInStock, setBulkInStock] = useState(true);
 
   const utils = trpc.useUtils();
 
@@ -99,10 +114,13 @@ export default function ProductsPage() {
 
   const { data: categories } = trpc.category.adminList.useQuery();
 
+  const { data: stockStats } = trpc.product.getStockStats.useQuery();
+
   const deleteMutation = trpc.product.delete.useMutation({
     onSuccess: () => {
       toast.success("Product deleted successfully");
       utils.product.adminList.invalidate();
+      utils.product.getStockStats.invalidate();
       setDeletingProduct(null);
     },
     onError: (error) => {
@@ -114,9 +132,45 @@ export default function ProductsPage() {
     onSuccess: () => {
       toast.success("Product duplicated successfully");
       utils.product.adminList.invalidate();
+      utils.product.getStockStats.invalidate();
     },
     onError: (error) => {
       toast.error(error.message || "Failed to duplicate product");
+    },
+  });
+
+  const bulkUpdateMutation = trpc.product.bulkUpdate.useMutation({
+    onSuccess: () => {
+      toast.success(`${selectedProducts.size} products updated`);
+      utils.product.adminList.invalidate();
+      utils.product.getStockStats.invalidate();
+      setSelectedProducts(new Set());
+      setBulkEditOpen(false);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update products");
+    },
+  });
+
+  const bulkDeleteMutation = trpc.product.bulkDelete.useMutation({
+    onSuccess: () => {
+      toast.success(`${selectedProducts.size} products deleted`);
+      utils.product.adminList.invalidate();
+      utils.product.getStockStats.invalidate();
+      setSelectedProducts(new Set());
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete products");
+    },
+  });
+
+  const updateStockMutation = trpc.product.updateStock.useMutation({
+    onSuccess: () => {
+      utils.product.adminList.invalidate();
+      utils.product.getStockStats.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update stock");
     },
   });
 
@@ -124,6 +178,17 @@ export default function ProductsPage() {
     if (deletingProduct) {
       deleteMutation.mutate({ id: deletingProduct.id });
     }
+  };
+
+  const handleBulkEdit = () => {
+    bulkUpdateMutation.mutate({
+      ids: Array.from(selectedProducts),
+      data: { inStock: bulkInStock },
+    });
+  };
+
+  const handleBulkDelete = () => {
+    bulkDeleteMutation.mutate({ ids: Array.from(selectedProducts) });
   };
 
   const handleSelectAll = () => {
@@ -186,6 +251,41 @@ export default function ProductsPage() {
             </Link>
           </Button>
         </div>
+      </div>
+
+      {/* Stock Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        <Card className="border">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Products</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stockStats?.total || 0}</div>
+          </CardContent>
+        </Card>
+        <Card className="border">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">In Stock</CardTitle>
+            <PackageCheck className="h-4 w-4 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              {stockStats?.inStock || 0}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Out of Stock</CardTitle>
+            <PackageX className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+              {stockStats?.outOfStock || 0}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters & View Toggle */}
@@ -288,13 +388,19 @@ export default function ProductsPage() {
             Clear selection
           </Button>
           <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setBulkEditOpen(true)}
+          >
+            Bulk Edit
+          </Button>
+          <Button
             variant="destructive"
             size="sm"
-            onClick={() => {
-              toast.info("Bulk delete coming soon");
-            }}
+            onClick={handleBulkDelete}
+            disabled={bulkDeleteMutation.isPending}
           >
-            Delete selected
+            {bulkDeleteMutation.isPending ? "Deleting..." : "Delete selected"}
           </Button>
         </div>
       )}
@@ -319,7 +425,7 @@ export default function ProductsPage() {
                 <TableHead>Product</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Stock</TableHead>
                 <TableHead className="w-[70px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -415,23 +521,22 @@ export default function ProductsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "text-xs",
-                            product.isActive
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                              : "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20"
-                          )}
-                        >
-                          {product.isActive ? "Active" : "Draft"}
-                        </Badge>
-                        {product.isFeatured && (
-                          <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20">
-                            Featured
-                          </Badge>
-                        )}
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={product.inStock}
+                          onCheckedChange={(checked) => {
+                            updateStockMutation.mutate({ id: product.id, inStock: checked });
+                          }}
+                          disabled={updateStockMutation.isPending}
+                        />
+                        <span className={cn(
+                          "text-sm",
+                          product.inStock
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-red-600 dark:text-red-400"
+                        )}>
+                          {product.inStock ? "In Stock" : "Out"}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -682,6 +787,46 @@ export default function ProductsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk Edit Dialog */}
+      <Dialog open={bulkEditOpen} onOpenChange={setBulkEditOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Bulk Edit Products</DialogTitle>
+            <DialogDescription>
+              Update {selectedProducts.size} selected product(s)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="bulk-stock" className="text-sm font-medium">
+                Stock Status
+              </Label>
+              <div className="flex items-center gap-3">
+                <span className={cn("text-sm", !bulkInStock && "font-medium")}>
+                  Out of Stock
+                </span>
+                <Switch
+                  id="bulk-stock"
+                  checked={bulkInStock}
+                  onCheckedChange={setBulkInStock}
+                />
+                <span className={cn("text-sm", bulkInStock && "font-medium")}>
+                  In Stock
+                </span>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkEditOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleBulkEdit} disabled={bulkUpdateMutation.isPending}>
+              {bulkUpdateMutation.isPending ? "Updating..." : "Update Products"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

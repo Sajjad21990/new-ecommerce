@@ -250,23 +250,21 @@ export function MediaPicker({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl h-[80vh] flex flex-col p-0">
         <DialogHeader className="px-6 py-4 border-b">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pr-8">
             <DialogTitle>Select Media</DialogTitle>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <label className="cursor-pointer">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload
-                  <input
-                    type="file"
-                    multiple={multiple}
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
-                  />
-                </label>
-              </Button>
-            </div>
+            <Button variant="outline" size="sm" asChild>
+              <label className="cursor-pointer">
+                <Upload className="mr-2 h-4 w-4" />
+                Upload
+                <input
+                  type="file"
+                  multiple={multiple}
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+                />
+              </label>
+            </Button>
           </div>
 
           {/* Breadcrumbs */}

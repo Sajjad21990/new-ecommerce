@@ -70,7 +70,7 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
           isCollapsed ? "md:pl-[60px]" : "md:pl-[220px]"
         )}
       >
-        <div className="p-4 lg:p-6">{children}</div>
+        <div className="px-4 pt-2 pb-4 lg:px-6">{children}</div>
       </main>
 
       {/* Command Search */}

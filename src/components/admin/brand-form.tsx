@@ -21,6 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { ImageUpload } from "@/components/admin/image-upload";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -28,7 +29,7 @@ import { toast } from "sonner";
 const brandSchema = z.object({
   name: z.string().min(1, "Name is required"),
   slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug must be lowercase with hyphens"),
-  logo: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  logo: z.string().optional().or(z.literal("")),
   isActive: z.boolean(),
 });
 
@@ -180,9 +181,14 @@ export function BrandForm({ open, onClose, brand }: BrandFormProps) {
               name="logo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Logo URL</FormLabel>
+                  <FormLabel>Logo</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="https://..." />
+                    <ImageUpload
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      onRemove={() => field.onChange("")}
+                      folder="cms-ecommerce/brands"
+                    />
                   </FormControl>
                   <FormDescription>
                     Brand logo image (optional)

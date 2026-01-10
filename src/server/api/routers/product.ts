@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { eq, and, gte, lte, like, desc, asc, sql, inArray, or } from "drizzle-orm";
+import { eq, and, gte, lte, ilike, desc, asc, sql, inArray, or } from "drizzle-orm";
 import {
   createTRPCRouter,
   publicProcedure,
@@ -79,7 +79,7 @@ export const productRouter = createTRPCRouter({
         conditions.push(lte(products.basePrice, maxPrice.toString()));
       }
       if (search) {
-        conditions.push(like(products.name, `%${search}%`));
+        conditions.push(ilike(products.name, `%${search}%`));
       }
       if (isNew !== undefined) {
         conditions.push(eq(products.isNew, isNew));
@@ -380,7 +380,7 @@ export const productRouter = createTRPCRouter({
       return ctx.db.query.products.findMany({
         where: and(
           eq(products.isActive, true),
-          like(products.name, `%${input.query}%`)
+          ilike(products.name, `%${input.query}%`)
         ),
         limit: input.limit,
         with: {
@@ -585,6 +585,33 @@ export const productRouter = createTRPCRouter({
       return { success: true };
     }),
 
+  // Admin: Get stock stats
+  getStockStats: adminProcedure.query(async ({ ctx }) => {
+    const [totalResult, inStockResult, outOfStockResult] = await Promise.all([
+      ctx.db.select({ count: sql<number>`count(*)` }).from(products),
+      ctx.db.select({ count: sql<number>`count(*)` }).from(products).where(eq(products.inStock, true)),
+      ctx.db.select({ count: sql<number>`count(*)` }).from(products).where(eq(products.inStock, false)),
+    ]);
+
+    return {
+      total: Number(totalResult[0]?.count ?? 0),
+      inStock: Number(inStockResult[0]?.count ?? 0),
+      outOfStock: Number(outOfStockResult[0]?.count ?? 0),
+    };
+  }),
+
+  // Admin: Update single product stock status
+  updateStock: adminProcedure
+    .input(z.object({ id: z.string().uuid(), inStock: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const [updated] = await ctx.db
+        .update(products)
+        .set({ inStock: input.inStock, updatedAt: new Date() })
+        .where(eq(products.id, input.id))
+        .returning();
+      return updated;
+    }),
+
   // Admin: List all products (including inactive)
   adminList: adminProcedure
     .input(
@@ -602,7 +629,7 @@ export const productRouter = createTRPCRouter({
 
       const conditions = [];
       if (search) {
-        conditions.push(like(products.name, `%${search}%`));
+        conditions.push(ilike(products.name, `%${search}%`));
       }
       if (categoryId) {
         conditions.push(eq(products.categoryId, categoryId));
@@ -736,6 +763,7 @@ export const productRouter = createTRPCRouter({
           isActive: z.boolean().optional(),
           isFeatured: z.boolean().optional(),
           isNew: z.boolean().optional(),
+          inStock: z.boolean().optional(),
           visibility: visibilityEnum.optional(),
           categoryId: z.string().uuid().nullable().optional(),
           brandId: z.string().uuid().nullable().optional(),

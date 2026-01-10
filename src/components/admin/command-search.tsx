@@ -14,7 +14,6 @@ import {
   FileText,
   Settings,
   ImageIcon,
-  Warehouse,
   Plus,
   Search,
   ArrowRight,
@@ -72,13 +71,7 @@ const pages = [
     icon: ImageIcon,
     keywords: ["images", "files", "uploads"],
   },
-  {
-    name: "Inventory",
-    href: "/admin/inventory",
-    icon: Warehouse,
-    keywords: ["stock", "quantity"],
-  },
-  {
+    {
     name: "All Orders",
     href: "/admin/orders",
     icon: ShoppingCart,
@@ -128,12 +121,6 @@ const quickActions = [
     href: "/admin/orders",
     icon: ShoppingCart,
     shortcut: "O",
-  },
-  {
-    name: "Manage Inventory",
-    href: "/admin/inventory",
-    icon: Warehouse,
-    shortcut: "I",
   },
 ];
 

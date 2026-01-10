@@ -1,11 +1,12 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { trpc } from "@/lib/trpc/client";
 import { RevenueChart } from "@/components/admin/revenue-chart";
 import { RecentOrdersTable } from "@/components/admin/recent-orders-table";
 import { TopProducts } from "@/components/admin/top-products";
+import { CategorySalesChart } from "@/components/admin/category-sales-chart";
 import {
   IndianRupee,
   ShoppingCart,
@@ -16,14 +17,61 @@ import {
   AlertTriangle,
   ArrowRight,
   Calendar,
-  Download,
+  ChevronDown,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { subDays, subMonths } from "date-fns";
+
+type DateRangeOption = "7d" | "30d" | "90d" | "12m";
+
+const dateRangeOptions: { value: DateRangeOption; label: string }[] = [
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+  { value: "90d", label: "Last 90 days" },
+  { value: "12m", label: "Last 12 months" },
+];
 
 export default function AdminDashboard() {
+  const [dateRange, setDateRange] = useState<DateRangeOption>("30d");
+
   const { data: stats, isLoading } = trpc.dashboard.getStats.useQuery();
+
+  // Calculate date range for child components
+  const dateRangeValues = useMemo(() => {
+    const endDate = new Date();
+    let startDate: Date;
+
+    switch (dateRange) {
+      case "7d":
+        startDate = subDays(endDate, 7);
+        break;
+      case "30d":
+        startDate = subDays(endDate, 30);
+        break;
+      case "90d":
+        startDate = subDays(endDate, 90);
+        break;
+      case "12m":
+        startDate = subMonths(endDate, 12);
+        break;
+      default:
+        startDate = subDays(endDate, 30);
+    }
+
+    return { startDate, endDate };
+  }, [dateRange]);
+
+  const selectedRangeLabel = dateRangeOptions.find(
+    (opt) => opt.value === dateRange
+  )?.label;
 
   // Format numbers with K/M suffix
   const formatNumber = (num: number) => {
@@ -36,16 +84,30 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">E-Commerce Dashboard</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-9">
-            <Calendar className="mr-2 h-4 w-4" />
-            <span className="text-sm">Last 30 days</span>
-          </Button>
-          <Button size="sm" className="h-9">
-            <Download className="mr-2 h-4 w-4" />
-            Download
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9">
+                <Calendar className="mr-2 h-4 w-4" />
+                <span className="text-sm">{selectedRangeLabel}</span>
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {dateRangeOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => setDateRange(option.value)}
+                  className={cn(
+                    dateRange === option.value && "bg-accent"
+                  )}
+                >
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -71,7 +133,7 @@ export default function AdminDashboard() {
                   ) : (
                     <TrendingDown className="h-3 w-3" />
                   )}
-                  {Math.abs(stats?.revenueChange || 12.5)}%
+                  {Math.abs(stats?.revenueChange || 0).toFixed(1)}%
                 </span>
                 <span className="text-muted-foreground">from last month</span>
               </div>
@@ -102,7 +164,7 @@ export default function AdminDashboard() {
                   ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                   : "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400"
               )}>
-                {(stats?.ordersChange || 0) >= 0 ? "+" : ""}{stats?.ordersChange || 8.2}%
+                {(stats?.ordersChange || 0) >= 0 ? "+" : ""}{(stats?.ordersChange || 0).toFixed(1)}%
               </div>
             </div>
             <Link
@@ -130,7 +192,7 @@ export default function AdminDashboard() {
                   ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                   : "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400"
               )}>
-                {(stats?.customersChange || 0) >= 0 ? "+" : ""}{stats?.customersChange || 19.2}%
+                {(stats?.customersChange || 0) >= 0 ? "+" : ""}{(stats?.customersChange || 0).toFixed(1)}%
               </div>
             </div>
             <Link
@@ -158,7 +220,7 @@ export default function AdminDashboard() {
                   ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                   : "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400"
               )}>
-                {(stats?.productsChange || 0) >= 0 ? "+" : ""}{stats?.productsChange || 3}%
+                {(stats?.productsChange || 0) >= 0 ? "+" : ""}{(stats?.productsChange || 0).toFixed(1)}%
               </div>
             </div>
             <Link
@@ -171,25 +233,24 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid gap-6 lg:grid-cols-7">
-        {/* Revenue Chart */}
-        <div className="lg:col-span-4">
-          <RevenueChart />
-        </div>
+      {/* Revenue Chart - Full Width */}
+      <RevenueChart />
 
-        {/* Recent Orders */}
-        <div className="lg:col-span-3">
-          <RecentOrdersTable />
-        </div>
+      {/* Category Sales & Top Products */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <CategorySalesChart
+          startDate={dateRangeValues.startDate}
+          endDate={dateRangeValues.endDate}
+        />
+        <TopProducts
+          startDate={dateRangeValues.startDate}
+          endDate={dateRangeValues.endDate}
+        />
       </div>
 
-      {/* Bottom Section */}
+      {/* Recent Orders & Low Stock */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Top Products */}
-        <TopProducts />
-
-        {/* Low Stock Alert */}
+        <RecentOrdersTable />
         <LowStockAlert />
       </div>
 
@@ -276,7 +337,7 @@ function LowStockAlert() {
           <CardTitle className="text-base font-semibold">Low Stock Alerts</CardTitle>
         </div>
         <Button variant="ghost" size="sm" className="text-xs" asChild>
-          <Link href="/admin/inventory">
+          <Link href="/admin/products">
             View All
             <ArrowRight className="ml-1 h-3 w-3" />
           </Link>

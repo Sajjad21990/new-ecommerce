@@ -14,7 +14,6 @@ import {
   Settings,
   Store,
   ImageIcon,
-  Warehouse,
   ChevronRight,
   Plus,
   ListOrdered,
@@ -57,7 +56,6 @@ const navigation: NavItem[] = [
     submenu: [
       { name: "All Products", href: "/admin/products", icon: ListOrdered },
       { name: "Add Product", href: "/admin/products/new", icon: Plus },
-      { name: "Inventory", href: "/admin/inventory", icon: Warehouse },
       { name: "Categories", href: "/admin/categories", icon: FolderTree },
       { name: "Brands", href: "/admin/brands", icon: Tag },
     ],

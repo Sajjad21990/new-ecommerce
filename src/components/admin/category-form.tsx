@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageUpload } from "@/components/admin/image-upload";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -37,7 +38,7 @@ const categorySchema = z.object({
   name: z.string().min(1, "Name is required"),
   slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug must be lowercase with hyphens"),
   description: z.string().optional(),
-  image: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  image: z.string().optional().or(z.literal("")),
   parentId: z.string().nullable(),
   sortOrder: z.number().int(),
   isActive: z.boolean(),
@@ -275,9 +276,14 @@ export function CategoryForm({ open, onClose, category, categories }: CategoryFo
               name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image URL</FormLabel>
+                  <FormLabel>Image</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="https://..." />
+                    <ImageUpload
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      onRemove={() => field.onChange("")}
+                      folder="cms-ecommerce/categories"
+                    />
                   </FormControl>
                   <FormDescription>
                     Category banner image (optional)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Area,
   AreaChart,
@@ -12,57 +12,86 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc/client";
+import { format, subDays, subMonths } from "date-fns";
 
 type Period = "7d" | "30d" | "90d" | "12m";
 
 interface RevenueChartProps {
-  data?: {
-    date: string;
-    revenue: number;
-    orders: number;
-  }[];
-  loading?: boolean;
+  className?: string;
 }
 
-// Generate sample data if none provided
-const generateSampleData = (period: Period) => {
-  const data = [];
-  const now = new Date();
-  let days = 7;
+export function RevenueChart({ className }: RevenueChartProps) {
+  const [period, setPeriod] = useState<Period>("30d");
 
-  switch (period) {
-    case "30d":
-      days = 30;
-      break;
-    case "90d":
-      days = 90;
-      break;
-    case "12m":
-      days = 365;
-      break;
-  }
+  // Calculate date range based on selected period
+  const dateRange = useMemo(() => {
+    const endDate = new Date();
+    let startDate: Date;
+    let groupBy: "day" | "week" | "month" = "day";
 
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
+    switch (period) {
+      case "7d":
+        startDate = subDays(endDate, 7);
+        groupBy = "day";
+        break;
+      case "30d":
+        startDate = subDays(endDate, 30);
+        groupBy = "day";
+        break;
+      case "90d":
+        startDate = subDays(endDate, 90);
+        groupBy = "week";
+        break;
+      case "12m":
+        startDate = subMonths(endDate, 12);
+        groupBy = "month";
+        break;
+      default:
+        startDate = subDays(endDate, 30);
+    }
 
-    data.push({
-      date: date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
-      revenue: Math.floor(Math.random() * 5000) + 1000,
-      orders: Math.floor(Math.random() * 50) + 10,
+    return { startDate, endDate, groupBy };
+  }, [period]);
+
+  const { data: salesData, isLoading } = trpc.reports.salesByDate.useQuery({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+    groupBy: dateRange.groupBy,
+  });
+
+  // Format chart data with readable dates
+  const chartData = useMemo(() => {
+    if (!salesData || salesData.length === 0) return [];
+
+    return salesData.map((item) => {
+      let formattedDate = item.date;
+
+      // Format date based on groupBy
+      if (dateRange.groupBy === "day") {
+        // Parse YYYY-MM-DD format
+        const [year, month, day] = item.date.split("-");
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        formattedDate = format(date, "MMM d");
+      } else if (dateRange.groupBy === "week") {
+        // Week format: YYYY-WW
+        formattedDate = `W${item.date.split("-")[1]}`;
+      } else if (dateRange.groupBy === "month") {
+        // Month format: YYYY-MM
+        const [year, month] = item.date.split("-");
+        const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+        formattedDate = format(date, "MMM yyyy");
+      }
+
+      return {
+        date: formattedDate,
+        revenue: item.revenue,
+        orders: item.orders,
+      };
     });
-  }
-
-  return data;
-};
-
-export function RevenueChart({ data, loading = false }: RevenueChartProps) {
-  const [period, setPeriod] = useState<Period>("7d");
-  const chartData = data || generateSampleData(period);
+  }, [salesData, dateRange.groupBy]);
 
   const periods: { value: Period; label: string }[] = [
     { value: "7d", label: "7 days" },
@@ -97,7 +126,7 @@ export function RevenueChart({ data, loading = false }: RevenueChartProps) {
   };
 
   return (
-    <Card className="border">
+    <Card className={cn("border", className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-base font-semibold">Revenue Overview</CardTitle>
         <div className="flex gap-1">
@@ -120,9 +149,16 @@ export function RevenueChart({ data, loading = false }: RevenueChartProps) {
         </div>
       </CardHeader>
       <CardContent>
-        {loading ? (
+        {isLoading ? (
+          <div className="h-[300px] flex flex-col gap-4">
+            <Skeleton className="h-full w-full" />
+          </div>
+        ) : chartData.length === 0 ? (
           <div className="h-[300px] flex items-center justify-center">
-            <div className="text-sm text-muted-foreground">Loading chart...</div>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">No sales data for this period</p>
+              <p className="text-xs text-muted-foreground mt-1">Orders will appear here once you have sales</p>
+            </div>
           </div>
         ) : (
           <div className="h-[300px] w-full">
